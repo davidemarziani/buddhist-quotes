@@ -1,0 +1,16 @@
+/* Quote text styling */
+.bq-quote {
+    font-style: italic;
+}
+
+/* Author container layout */
+.bq-quote-author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Author avatar size */
+.bq-quote-author img {
+    max-width: 40px;
+}
