@@ -28,8 +28,6 @@ Il plugin usa le costanti definite in `buddhist-quotes.php`:
 - `BQ_API_BASE_URL` = `https://buddha-api.com/api/`
 - `BQ_API_MODE` = `random`
 
-Puoi modificare queste costanti temporaneamente per testare comportamenti diversi.
-
 ## Note tecniche
 
 - la richiesta HTTP utilizza `wp_remote_get()`.
