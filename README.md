@@ -16,7 +16,7 @@ Un plugin WordPress che aggiunge un widget alla dashboard di amministrazione per
 1. Copia la cartella `buddhist-quotes` in `wp-content/plugins/`.
 2. Vai in `Plugin` nella dashboard di WordPress.
 3. Attiva il plugin `Buddhist Quotes`.
-4. Vai in `Impostazioni > Buddhist Quotes` e inserisci la API key condivisa con `api.davidemarziani.com` (la stessa configurata in `config.php` sul server dell'API).
+4. Vai in `Impostazioni > Buddhist Quotes` e inserisci la API key condivisa con `api.davidemarziani.com`.
 5. Apri la dashboard e verifica la presenza del widget `Buddhist Quotes`.
 
 ## Uso
