@@ -3,8 +3,8 @@
 /**
  * Plugin Name: Buddhist Quotes
  * Plugin URI: https://github.com/davidemarziani/buddhist-quotes
- * Description: Displays a Buddhist quote in the WordPress dashboard via buddha-api.com.
- * Version: 1.0.0
+ * Description: Displays a Buddhist quote in the WordPress dashboard via api.davidemarziani.com.
+ * Version: 1.1.0
  * Author: Davide Marziani
  * Author URI: https://github.com/davidemarziani
  * License: GPL2+
@@ -14,10 +14,84 @@
 defined('ABSPATH') || exit;
 
 /**
- * API base endpoint and default mode.
+ * API endpoint. Single route, mirrors the old buddha-api.com /api/random
+ * shape (text / byName / byImage), so parsing below is unchanged.
  */
-define('BQ_API_BASE_URL', 'https://buddha-api.com/api/');
-define('BQ_API_MODE', 'random');
+define('BQ_API_BASE_URL', 'https://api.davidemarziani.com/buddhist-quotes/');
+
+/**
+ * Option name storing the shared API key (set via Settings > Buddhist Quotes).
+ */
+define('BQ_API_KEY_OPTION', 'bq_api_key');
+
+/**
+ * Registers the "API Key" setting and its admin page under Settings.
+ */
+function bq_register_settings()
+{
+    register_setting('bq_settings_group', BQ_API_KEY_OPTION, [
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_text_field',
+        'default'           => '',
+    ]);
+
+    add_settings_section(
+        'bq_settings_section',
+        esc_html__('API Configuration', 'buddhist-quotes'),
+        '__return_false',
+        'bq_settings'
+    );
+
+    add_settings_field(
+        'bq_api_key_field',
+        esc_html__('API Key', 'buddhist-quotes'),
+        'bq_api_key_field_render',
+        'bq_settings',
+        'bq_settings_section'
+    );
+}
+add_action('admin_init', 'bq_register_settings');
+
+/**
+ * Adds the "Buddhist Quotes" entry under Settings.
+ */
+function bq_add_settings_page()
+{
+    add_options_page(
+        esc_html__('Buddhist Quotes', 'buddhist-quotes'),
+        esc_html__('Buddhist Quotes', 'buddhist-quotes'),
+        'manage_options',
+        'bq_settings',
+        'bq_settings_page_render'
+    );
+}
+add_action('admin_menu', 'bq_add_settings_page');
+
+/**
+ * Renders the API Key field.
+ */
+function bq_api_key_field_render()
+{
+    $value = get_option(BQ_API_KEY_OPTION, '');
+    echo '<input type="password" name="' . esc_attr(BQ_API_KEY_OPTION) . '" value="' . esc_attr($value) . '" class="regular-text" autocomplete="off">';
+    echo '<p class="description">' . esc_html__('Shared secret for api.davidemarziani.com (sent as the X-Api-Key header).', 'buddhist-quotes') . '</p>';
+}
+
+/**
+ * Renders the settings page.
+ */
+function bq_settings_page_render()
+{
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+
+    echo '<div class="wrap"><h1>' . esc_html__('Buddhist Quotes', 'buddhist-quotes') . '</h1><form action="options.php" method="post">';
+    settings_fields('bq_settings_group');
+    do_settings_sections('bq_settings');
+    submit_button();
+    echo '</form></div>';
+}
 
 /**
  * Registers the dashboard widget.
@@ -37,11 +111,23 @@ add_action('wp_dashboard_setup', 'bq_add_dashboard_widgets');
  */
 function bq_dashboard_widget_render()
 {
+    // Require an API key before even trying the request
+    $api_key = get_option(BQ_API_KEY_OPTION, '');
+    if (empty($api_key)) {
+        printf(
+            /* translators: %s: URL of the plugin settings page */
+            esc_html__('Please set an API key in %s.', 'buddhist-quotes'),
+            '<a href="' . esc_url(admin_url('options-general.php?page=bq_settings')) . '">' . esc_html__('Settings > Buddhist Quotes', 'buddhist-quotes') . '</a>'
+        );
+        return;
+    }
+
     // Perform API request
-    $response = wp_remote_get(BQ_API_BASE_URL . BQ_API_MODE, [
+    $response = wp_remote_get(BQ_API_BASE_URL, [
         'timeout' => 5,
         'headers' => [
-            'Accept' => 'application/json',
+            'Accept'    => 'application/json',
+            'X-Api-Key' => $api_key,
         ],
     ]);
 
@@ -112,7 +198,7 @@ function bq_enqueue_dashboard_widget_style($hook)
         'bq-dashboard-widget-style',
         plugin_dir_url(__FILE__) . 'assets/css/buddhist-quotes.css',
         [],
-        '1.0.0'
+        '1.1.0'
     );
 }
 add_action('admin_enqueue_scripts', 'bq_enqueue_dashboard_widget_style');
